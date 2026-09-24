@@ -1,0 +1,143 @@
+{% extends "base.html" %}
+
+{% block title %}Student Safety Hub - Campus Emergency AI{% endblock %}
+
+{% block content %}
+<div class="row g-4">
+    <!-- Big SOS Hero Action Panel -->
+    <div class="col-lg-5">
+        <div class="card border-0 shadow-sm bg-danger text-white overflow-hidden text-center p-4 p-md-5">
+            <div class="mb-3">
+                <span class="badge bg-white text-danger fw-bold px-3 py-2 text-uppercase letter-spacing-1">Immediate Assistance</span>
+            </div>
+            <h2 class="fw-bold mb-3">Facing an Emergency on Campus?</h2>
+            <p class="lead opacity-90 mb-4">
+                Pressing the SOS button alerts the AI Dispatch Engine, triggers contextual severity analysis, and dispatches the nearest response team.
+            </p>
+
+            <div class="d-grid gap-2 col-md-10 mx-auto">
+                <a href="{{ url_for('student.sos_submit') }}" class="btn btn-light btn-lg text-danger fw-bold py-3 shadow-sm text-uppercase">
+                    <i class="bi bi-broadcast me-2 fs-4 align-middle"></i> Open SOS Incident Transmitter
+                </a>
+            </div>
+
+            <div class="mt-4 pt-3 border-top border-danger-subtle small opacity-75">
+                <i class="bi bi-geo-alt-fill me-1"></i> Supports Automatic Browser Geolocation & Manual Landmark Fallback
+            </div>
+        </div>
+
+        <!-- Campus Emergency Helplines -->
+        <div class="card border-0 shadow-sm mt-4">
+            <div class="card-body p-4">
+                <h5 class="fw-bold mb-3 text-dark"><i class="bi bi-telephone-inbound-fill text-danger me-2"></i> Direct Hotline Directory</h5>
+                <ul class="list-group list-group-flush">
+                    <li class="list-group-item d-flex justify-content-between align-items-center px-0">
+                        <span><i class="bi bi-hospital text-danger me-2"></i> Campus Health Center</span>
+                        <a href="tel:080-22961001" class="fw-bold text-decoration-none">080-22961001</a>
+                    </li>
+                    <li class="list-group-item d-flex justify-content-between align-items-center px-0">
+                        <span><i class="bi bi-shield-fill text-primary me-2"></i> Main Gate Security Control</span>
+                        <a href="tel:080-22961002" class="fw-bold text-decoration-none">080-22961002</a>
+                    </li>
+                    <li class="list-group-item d-flex justify-content-between align-items-center px-0">
+                        <span><i class="bi bi-fire text-warning me-2"></i> Fire & Hazard Safety Unit</span>
+                        <a href="tel:080-22961003" class="fw-bold text-decoration-none">080-22961003</a>
+                    </li>
+                    <li class="list-group-item d-flex justify-content-between align-items-center px-0">
+                        <span><i class="bi bi-heart-pulse text-info me-2"></i> Student Mental Health Desk</span>
+                        <a href="tel:080-22961004" class="fw-bold text-decoration-none">080-22961004</a>
+                    </li>
+                </ul>
+            </div>
+        </div>
+    </div>
+
+    <!-- Right Side: Reported Incidents & Real-Time Tracking -->
+    <div class="col-lg-7">
+        <div class="card border-0 shadow-sm">
+            <div class="card-header bg-white py-3 d-flex justify-content-between align-items-center border-bottom">
+                <h5 class="fw-bold mb-0 text-dark"><i class="bi bi-clock-history text-secondary me-2"></i> My Reported Emergencies</h5>
+                <a href="{{ url_for('student.sos_submit') }}" class="btn btn-outline-danger btn-sm">
+                    <i class="bi bi-plus-circle me-1"></i> New Alert
+                </a>
+            </div>
+
+            <div class="card-body p-0">
+                {% if incidents %}
+                    <div class="table-responsive">
+                        <table class="table table-hover align-middle mb-0">
+                            <thead class="table-light small text-muted text-uppercase">
+                                <tr>
+                                    <th>Incident / Type</th>
+                                    <th>Location</th>
+                                    <th>Severity</th>
+                                    <th>Status</th>
+                                    <th>Reported</th>
+                                    <th class="text-end">Action</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for inc in incidents %}
+                                    <tr>
+                                        <td>
+                                            <div class="fw-bold text-dark">#{{ inc.id }} - {{ inc.incident_type }}</div>
+                                            <div class="small text-muted text-truncate" style="max-width: 220px;">
+                                                {{ inc.summary or inc.message }}
+                                            </div>
+                                        </td>
+                                        <td>
+                                            <small><i class="bi bi-geo-alt text-danger"></i> {{ inc.location_name }}</small>
+                                        </td>
+                                        <td>
+                                            {% if inc.severity_level == 'High' %}
+                                                <span class="badge bg-danger">{{ inc.severity_score }}/10 High</span>
+                                            {% elif inc.severity_level == 'Medium' %}
+                                                <span class="badge bg-warning text-dark">{{ inc.severity_score }}/10 Med</span>
+                                            {% else %}
+                                                <span class="badge bg-success">{{ inc.severity_score }}/10 Low</span>
+                                            {% endif %}
+                                        </td>
+                                        <td>
+                                            {% if inc.status == 'Resolved' %}
+                                                <span class="badge bg-secondary">Resolved</span>
+                                            {% elif inc.status == 'In-Progress' or inc.status == 'Assigned' %}
+                                                <span class="badge bg-primary">{{ inc.status }}</span>
+                                            {% else %}
+                                                <span class="badge bg-danger">Pending</span>
+                                            {% endif %}
+                                        </td>
+                                        <td class="small text-muted">
+                                            {{ inc.created_at.strftime('%d %b, %H:%M') }}
+                                        </td>
+                                        <td class="text-end">
+                                            <a href="{{ url_for('student.incident_tracking', id=inc.id) }}" class="btn btn-sm btn-outline-primary">
+                                                Track <i class="bi bi-chevron-right"></i>
+                                            </a>
+                                        </td>
+                                    </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                {% else %}
+                    <div class="p-5 text-center text-muted">
+                        <div class="fs-1 text-secondary mb-2"><i class="bi bi-shield-check"></i></div>
+                        <h6>No active or past emergency incidents on record.</h6>
+                        <p class="small">Stay safe! If you ever witness an accident, fire, or distress, tap the SOS button immediately.</p>
+                    </div>
+                {% endif %}
+            </div>
+        </div>
+
+        <!-- Campus Safety Tips & Context Pipeline Info -->
+        <div class="card border-0 shadow-sm mt-4 bg-light">
+            <div class="card-body p-4">
+                <h6 class="fw-bold text-dark mb-2"><i class="bi bi-cpu-fill text-danger me-1"></i> How the Context-Aware AI Engine Protects You:</h6>
+                <p class="small text-muted mb-0">
+                    When you report an emergency, our hybrid natural language processor scans for critical danger triggers, applies machine learning classification (TF-IDF + Logistic Regression) against historical campus incident datasets, and uses the Haversine formula to compute proximity and route the nearest specialized responder team within seconds.
+                </p>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

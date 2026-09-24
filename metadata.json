@@ -1,0 +1,6 @@
+{
+  "name": "Context-Aware AI Campus Emergency Orchestration System",
+  "description": "BCA Final-Year Project: Intelligent emergency orchestration with rule-based and ML severity scoring, NLP summarization, and Haversine responder routing.",
+  "requestFramePermissions": ["geolocation"],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}

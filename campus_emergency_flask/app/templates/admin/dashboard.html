@@ -1,0 +1,187 @@
+{% extends "base.html" %}
+
+{% block title %}Admin Command Center - Campus Emergency AI{% endblock %}
+
+{% block content %}
+<div class="row g-3 mb-4">
+    <!-- Stat 1: Total Incidents -->
+    <div class="col-6 col-md-3">
+        <div class="card border-0 shadow-sm p-3 border-start border-4 border-primary">
+            <div class="small text-muted text-uppercase fw-bold">Total Alerts</div>
+            <div class="h3 fw-bold text-dark mb-0">{{ total_count }}</div>
+            <div class="small text-muted mt-1"><i class="bi bi-database"></i> Campus historical log</div>
+        </div>
+    </div>
+
+    <!-- Stat 2: High Severity Emergencies -->
+    <div class="col-6 col-md-3">
+        <div class="card border-0 shadow-sm p-3 border-start border-4 border-danger">
+            <div class="small text-muted text-uppercase fw-bold">Critical Emergencies</div>
+            <div class="h3 fw-bold text-danger mb-0">{{ high_count }}</div>
+            <div class="small text-danger mt-1"><i class="bi bi-exclamation-triangle-fill"></i> Score &ge; 7.0 / 10</div>
+        </div>
+    </div>
+
+    <!-- Stat 3: Active / Pending Dispatch -->
+    <div class="col-6 col-md-3">
+        <div class="card border-0 shadow-sm p-3 border-start border-4 border-warning">
+            <div class="small text-muted text-uppercase fw-bold">Active in Queue</div>
+            <div class="h3 fw-bold text-warning mb-0">{{ pending_count }}</div>
+            <div class="small text-muted mt-1"><i class="bi bi-clock-history"></i> Pending or assigned</div>
+        </div>
+    </div>
+
+    <!-- Stat 4: Resolved -->
+    <div class="col-6 col-md-3">
+        <div class="card border-0 shadow-sm p-3 border-start border-4 border-success">
+            <div class="small text-muted text-uppercase fw-bold">Resolved Cases</div>
+            <div class="h3 fw-bold text-success mb-0">{{ resolved_count }}</div>
+            <div class="small text-muted mt-1"><i class="bi bi-check-circle-fill"></i> Completed safely</div>
+        </div>
+    </div>
+</div>
+
+<!-- Filters Bar -->
+<div class="card border-0 shadow-sm mb-4">
+    <div class="card-body p-3">
+        <form method="GET" action="{{ url_for('admin.dashboard') }}" class="row g-2 align-items-center">
+            <div class="col-md-3">
+                <input type="text" name="q" class="form-control form-control-sm" placeholder="Search keywords or location..." value="{{ search_query }}">
+            </div>
+
+            <div class="col-md-2">
+                <select name="severity" class="form-select form-select-sm" onchange="this.form.submit()">
+                    <option value="all" {% if active_severity == 'all' %}selected{% endif %}>Severity: All</option>
+                    <option value="High" {% if active_severity == 'High' %}selected{% endif %}>High (&ge; 7.0)</option>
+                    <option value="Medium" {% if active_severity == 'Medium' %}selected{% endif %}>Medium (4.0-6.9)</option>
+                    <option value="Low" {% if active_severity == 'Low' %}selected{% endif %}>Low (&lt; 4.0)</option>
+                </select>
+            </div>
+
+            <div class="col-md-2">
+                <select name="status" class="form-select form-select-sm" onchange="this.form.submit()">
+                    <option value="all" {% if active_status == 'all' %}selected{% endif %}>Status: All</option>
+                    <option value="Pending" {% if active_status == 'Pending' %}selected{% endif %}>Pending</option>
+                    <option value="Assigned" {% if active_status == 'Assigned' %}selected{% endif %}>Assigned</option>
+                    <option value="In-Progress" {% if active_status == 'In-Progress' %}selected{% endif %}>In-Progress</option>
+                    <option value="Resolved" {% if active_status == 'Resolved' %}selected{% endif %}>Resolved</option>
+                </select>
+            </div>
+
+            <div class="col-md-2">
+                <select name="type" class="form-select form-select-sm" onchange="this.form.submit()">
+                    <option value="all" {% if active_type == 'all' %}selected{% endif %}>Type: All</option>
+                    <option value="Medical" {% if active_type == 'Medical' %}selected{% endif %}>Medical</option>
+                    <option value="Fire" {% if active_type == 'Fire' %}selected{% endif %}>Fire</option>
+                    <option value="Violence" {% if active_type == 'Violence' %}selected{% endif %}>Violence</option>
+                    <option value="Hazard" {% if active_type == 'Hazard' %}selected{% endif %}>Hazard</option>
+                    <option value="Structural" {% if active_type == 'Structural' %}selected{% endif %}>Structural</option>
+                    <option value="General" {% if active_type == 'General' %}selected{% endif %}>General</option>
+                </select>
+            </div>
+
+            <div class="col-md-3 d-flex gap-2">
+                <button type="submit" class="btn btn-dark btn-sm flex-grow-1"><i class="bi bi-funnel"></i> Apply Filter</button>
+                <a href="{{ url_for('admin.dashboard') }}" class="btn btn-outline-secondary btn-sm">Reset</a>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- Main Emergency Orchestration Table (Sorted by Severity Score Descending) -->
+<div class="card border-0 shadow-sm">
+    <div class="card-header bg-white py-3 d-flex justify-content-between align-items-center border-bottom">
+        <div>
+            <h5 class="fw-bold mb-0 text-dark"><i class="bi bi-broadcast text-danger me-2"></i> Real-Time Emergency Queue</h5>
+            <small class="text-muted">Sorted automatically by AI Severity Score (0.0 – 10.0)</small>
+        </div>
+        <span class="badge bg-danger px-3 py-2">
+            Average Score: {{ avg_score }}/10
+        </span>
+    </div>
+
+    <div class="card-body p-0">
+        {% if incidents %}
+            <div class="table-responsive">
+                <table class="table table-hover align-middle mb-0">
+                    <thead class="table-light small text-muted text-uppercase">
+                        <tr>
+                            <th style="width: 90px;">Severity</th>
+                            <th>Incident & Location</th>
+                            <th>Reporter</th>
+                            <th>AI Summary</th>
+                            <th>Assigned Unit</th>
+                            <th>Status</th>
+                            <th>Received</th>
+                            <th class="text-end">Command</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for inc in incidents %}
+                            <tr class="{% if inc.severity_level == 'High' and inc.status != 'Resolved' %}table-danger bg-opacity-25{% endif %}">
+                                <td>
+                                    {% if inc.severity_level == 'High' %}
+                                        <div class="badge bg-danger fs-6 fw-bold w-100 py-2">{{ inc.severity_score }}</div>
+                                        <div class="text-center small text-danger fw-bold mt-1">HIGH</div>
+                                    {% elif inc.severity_level == 'Medium' %}
+                                        <div class="badge bg-warning text-dark fs-6 fw-bold w-100 py-2">{{ inc.severity_score }}</div>
+                                        <div class="text-center small text-warning-emphasis fw-bold mt-1">MED</div>
+                                    {% else %}
+                                        <div class="badge bg-success fs-6 fw-bold w-100 py-2">{{ inc.severity_score }}</div>
+                                        <div class="text-center small text-success fw-bold mt-1">LOW</div>
+                                    {% endif %}
+                                </td>
+                                <td>
+                                    <div class="fw-bold text-dark">#{{ inc.id }} &middot; {{ inc.incident_type }}</div>
+                                    <div class="small text-muted"><i class="bi bi-geo-alt-fill text-danger"></i> {{ inc.location_name }}</div>
+                                    <div class="small text-secondary"><i class="bi bi-people"></i> {{ inc.people_count }} person(s) at risk</div>
+                                </td>
+                                <td>
+                                    <div class="fw-semibold text-dark">{{ inc.reporter_name }}</div>
+                                    <div class="small text-muted">{{ inc.reporter_phone or 'No phone' }}</div>
+                                </td>
+                                <td style="max-width: 300px;">
+                                    <div class="small text-dark font-monospace text-truncate">{{ inc.summary or inc.message }}</div>
+                                    <div class="small text-muted">ML: {{ inc.ml_level }} ({{ ((inc.ml_confidence or 0.85)*100)|round(0) }}%)</div>
+                                </td>
+                                <td>
+                                    {% if inc.assigned_responder and inc.assigned_responder.user %}
+                                        <span class="badge bg-primary text-wrap">{{ inc.assigned_responder.user.name }}</span>
+                                        <div class="small text-muted">{{ inc.assigned_responder.specialization }}</div>
+                                    {% else %}
+                                        <span class="badge bg-secondary">Unassigned</span>
+                                    {% endif %}
+                                </td>
+                                <td>
+                                    {% if inc.status == 'Resolved' %}
+                                        <span class="badge bg-secondary">Resolved</span>
+                                    {% elif inc.status == 'In-Progress' %}
+                                        <span class="badge bg-info text-dark">In-Progress</span>
+                                    {% elif inc.status == 'Assigned' %}
+                                        <span class="badge bg-primary">Assigned</span>
+                                    {% else %}
+                                        <span class="badge bg-danger pulse">Pending</span>
+                                    {% endif %}
+                                </td>
+                                <td class="small text-muted">
+                                    {{ inc.created_at.strftime('%H:%M:%S') }}
+                                </td>
+                                <td class="text-end">
+                                    <a href="{{ url_for('admin.incident_detail', id=inc.id) }}" class="btn btn-sm btn-dark">
+                                        <i class="bi bi-eye"></i> Manage
+                                    </a>
+                                </td>
+                            </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        {% else %}
+            <div class="p-5 text-center text-muted">
+                <i class="bi bi-check-circle fs-1 text-success mb-2"></i>
+                <h6>No incidents matching your filter criteria.</h6>
+            </div>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}

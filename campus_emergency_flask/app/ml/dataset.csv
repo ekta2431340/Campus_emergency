@@ -1,0 +1,46 @@
+incident_type,message,severity_level,severity_score,people_count
+Medical,Student collapsed in CS Lab 3 unconscious not breathing need defibrillator urgently,High,9.5,1
+Medical,Severe asthma attack in auditorium student cannot inhale blue lips,High,8.5,1
+Medical,Person tripped on stairs minor ankle sprain conscious and sitting safely,Low,2.5,1
+Medical,Small paper cut in printing shop needs bandaid,Low,1.0,1
+Medical,Student experiencing intense chest pain and left arm numbness in hostel B,High,9.0,1
+Medical,Fainted during morning assembly due to dehydration now sitting up drinking water,Medium,4.5,1
+Medical,Seizure reported in library quiet study area student shaking on ground,High,8.8,1
+Medical,Mild headache and nausea in exam hall requesting paracetamol,Low,2.0,1
+Medical,Severe diabetic hypoglycemia student semi-conscious sweating profusely,High,8.2,1
+Medical,Allergic reaction after lunch swollen face and wheezing peanut allergy,High,8.9,1
+Fire,Thick black smoke and flames coming from Chemistry Lab 204 chemicals exploding,High,10.0,15
+Fire,Small trash can fire behind cafeteria smoldering already doused with water,Low,2.0,0
+Fire,Fire alarm triggered in Girls Hostel Block 3 smoke detected on 4th floor corridor,High,8.5,40
+Fire,Sparks and burning electrical smell from electrical switchboard in mechanical workshop,Medium,6.5,5
+Fire,Microwave caught fire in faculty lounge smoke filling break room,Medium,5.5,3
+Fire,Dry leaves burning near north campus boundary fence spreading toward parking,Medium,6.0,0
+Fire,Flammable solvent spill caught fire in physics research room sprinkler activated,High,9.2,4
+Fire,Overheated projector smoking in Seminar Hall A students evacuated safely,Medium,4.0,20
+Violence,Physical fight outside Main Gate person brandishing sharp knife multiple students trapped,High,9.8,8
+Violence,Verbal argument between two groups near canteen heating up pushing and shouting,Medium,5.0,6
+Violence,Suspicious intruder spotted near girls hostel boundary wall trespassing at night,High,8.0,1
+Violence,Wallet and phone snatched near East Gate bicycle stand suspect ran toward highway,Medium,5.8,1
+Violence,Active assault reported in basement parking lot screams heard student pinned down,High,9.5,2
+Violence,Aggressive stray dog chasing students near sports complex,Medium,4.2,4
+Violence,Bullying incident in quadrangle verbal harassment no physical harm reported yet,Low,3.0,3
+Hazard,Strong hazardous sulfur gas leak in Science Block basement students coughing dizziness,High,8.8,12
+Hazard,Chemical acid carboy cracked open in Chemical Storage Room fumes spreading,High,9.0,3
+Hazard,High voltage power cable snapped on walkway during rain sparks live on wet pavement,High,9.4,5
+Hazard,Pungent sewage overflow near mess hall creating health biohazard and bad stench,Medium,4.5,20
+Hazard,Water pipe burst on 2nd floor corridor ceiling tiles collapsing slippery floor,Medium,5.2,10
+Hazard,Broken glass window shattered in classroom 101 windy storm glass on benches,Low,2.8,0
+Hazard,Mercury thermometer broken in bio lab mercury droplets on floor,Medium,5.0,2
+Structural,Lift elevator stuck between 3rd and 4th floor with 6 students inside panic attack,High,8.4,6
+Structural,Ceiling plaster fell down in Old Admin building near reception desk nobody hit,Medium,4.8,2
+Structural,Balcony railing loosened and wobbling in Mechanical Block dangerous drop hazard,Medium,5.5,0
+Structural,Heavy water logging blocking pedestrian exit during sudden cloudburst,Medium,4.0,50
+General,Lost bag containing laptop and hostel room keys at library helpdesk,Low,1.2,1
+General,Streetlight flickering outside South Gate area too dark for evening walkers,Low,2.0,0
+General,Panic button pressed accidentally by staff during maintenance test,Low,0.5,0
+General,Student feeling extreme panic attack and anxiety hyperventilating in counseling room,Medium,5.8,1
+Medical,Student fell off bicycle hit head bleeding from forehead dizzy,Medium,6.8,1
+Medical,Cardiac emergency faculty member clutching chest in Dean office,High,9.8,1
+Fire,Kitchen fryer in mess caught fire heavy smoke grease fire DO NOT USE WATER,High,9.0,8
+Hazard,Pest control toxic fumigation fumes drifting into adjacent inhabited classrooms,High,7.5,35
+Violence,Student threatened with metal rod behind sports pavilion immediate security required,High,8.7,2

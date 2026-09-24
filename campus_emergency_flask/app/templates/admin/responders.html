@@ -1,0 +1,56 @@
+{% extends "base.html" %}
+
+{% block title %}Tactical Responders Directory - Admin Console{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <div>
+        <h4 class="fw-bold text-dark mb-0"><i class="bi bi-people-fill text-danger me-2"></i> Campus First Responder Directory</h4>
+        <small class="text-muted">Manage tactical personnel, active locations, and unit readiness</small>
+    </div>
+    <span class="badge bg-dark px-3 py-2">{{ responders|length }} Units Registered</span>
+</div>
+
+<div class="row g-3">
+    {% for r in responders %}
+        <div class="col-md-6 col-lg-4">
+            <div class="card border-0 shadow-sm h-100">
+                <div class="card-body p-4">
+                    <div class="d-flex justify-content-between align-items-start mb-3">
+                        <div class="d-flex align-items-center gap-3">
+                            <div class="bg-dark text-white rounded-circle p-3 fs-5">
+                                <i class="bi bi-shield-check"></i>
+                            </div>
+                            <div>
+                                <h5 class="fw-bold mb-0 text-dark">{{ r.user.name }}</h5>
+                                <div class="badge bg-secondary">{{ r.specialization }}</div>
+                            </div>
+                        </div>
+                        <div>
+                            {% if r.current_status == 'Available' %}
+                                <span class="badge bg-success">Available</span>
+                            {% elif r.current_status == 'Busy' %}
+                                <span class="badge bg-warning text-dark">Busy</span>
+                            {% else %}
+                                <span class="badge bg-secondary">{{ r.current_status }}</span>
+                            {% endif %}
+                        </div>
+                    </div>
+
+                    <ul class="list-unstyled small mb-3 text-muted">
+                        <li class="mb-1"><i class="bi bi-envelope me-2"></i> {{ r.user.email }}</li>
+                        <li class="mb-1"><i class="bi bi-telephone me-2"></i> {{ r.user.phone or '+91 9876543210' }}</li>
+                        <li class="mb-1"><i class="bi bi-truck me-2"></i> Vehicle: <strong>{{ r.assigned_vehicle or 'Patrol Squad' }}</strong></li>
+                        <li><i class="bi bi-geo-alt me-2"></i> Current Coordinates: <code>{{ r.latitude }}, {{ r.longitude }}</code></li>
+                    </ul>
+
+                    <div class="border-top pt-2 small text-muted d-flex justify-content-between">
+                        <span>Active assignments:</span>
+                        <strong class="text-dark">{{ r.assigned_incidents|length }} cases</strong>
+                    </div>
+                </div>
+            </div>
+        </div>
+    {% endfor %}
+</div>
+{% endblock %}

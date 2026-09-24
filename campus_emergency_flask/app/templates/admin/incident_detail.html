@@ -1,0 +1,239 @@
+{% extends "base.html" %}
+
+{% block title %}Emergency Incident #{{ incident.id }} - Command Center{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <div>
+        <a href="{{ url_for('admin.dashboard') }}" class="btn btn-outline-secondary btn-sm mb-2">
+            <i class="bi bi-arrow-left"></i> Back to Live Queue
+        </a>
+        <h3 class="fw-bold text-dark mb-0">Emergency Incident Dossier #{{ incident.id }} &middot; {{ incident.incident_type }}</h3>
+    </div>
+    <div class="d-flex gap-2">
+        {% if incident.severity_level == 'High' %}
+            <span class="badge bg-danger fs-6 px-3 py-2">SEVERITY: {{ incident.severity_score }} / 10 &middot; CRITICAL</span>
+        {% elif incident.severity_level == 'Medium' %}
+            <span class="badge bg-warning text-dark fs-6 px-3 py-2">SEVERITY: {{ incident.severity_score }} / 10 &middot; MEDIUM</span>
+        {% else %}
+            <span class="badge bg-success fs-6 px-3 py-2">SEVERITY: {{ incident.severity_score }} / 10 &middot; LOW</span>
+        {% endif %}
+    </div>
+</div>
+
+<div class="row g-4">
+    <!-- Left Column: AI Diagnostics & Incident Context -->
+    <div class="col-lg-7">
+        <!-- AI Orchestration Engine Diagnostics -->
+        <div class="card border-0 shadow-sm mb-4">
+            <div class="card-header bg-dark text-white py-3">
+                <h5 class="fw-bold mb-0"><i class="bi bi-cpu text-info me-2"></i> Context-Aware AI Orchestration Breakdown</h5>
+            </div>
+            <div class="card-body">
+                <div class="row g-3 mb-3">
+                    <div class="col-sm-4">
+                        <div class="p-3 bg-light rounded text-center border">
+                            <div class="small text-muted text-uppercase fw-bold">Combined Score</div>
+                            <div class="h3 fw-bold text-danger mb-0">{{ incident.severity_score }} <small class="fs-6 text-muted">/ 10</small></div>
+                            <span class="badge bg-danger mt-1">{{ incident.severity_level }} Level</span>
+                        </div>
+                    </div>
+                    <div class="col-sm-4">
+                        <div class="p-3 bg-light rounded text-center border">
+                            <div class="small text-muted text-uppercase fw-bold">Rule Engine</div>
+                            <div class="h3 fw-bold text-dark mb-0">{{ incident.rule_score or incident.severity_score }}</div>
+                            <div class="small text-muted mt-1">Safety rules & weights</div>
+                        </div>
+                    </div>
+                    <div class="col-sm-4">
+                        <div class="p-3 bg-light rounded text-center border">
+                            <div class="small text-muted text-uppercase fw-bold">ML Classifier</div>
+                            <div class="h3 fw-bold text-primary mb-0">{{ incident.ml_level }}</div>
+                            <div class="small text-muted mt-1">{{ ((incident.ml_confidence or 0.85)*100)|round(1) }}% Confidence</div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Incident Executive Summary -->
+                <div class="p-3 bg-info bg-opacity-10 border border-info rounded mb-3">
+                    <div class="fw-bold text-info-emphasis small text-uppercase mb-1"><i class="bi bi-card-text"></i> Automated Dispatch Summary (NLP Extractive)</div>
+                    <div class="font-monospace text-dark fw-semibold">{{ incident.summary or "No automated summary generated." }}</div>
+                </div>
+
+                <!-- Triggered Rules / Keywords -->
+                <h6 class="fw-bold text-dark mb-2"><i class="bi bi-list-check text-secondary me-1"></i> Triggered Context Rules & Domain Modifiers:</h6>
+                <ul class="list-group list-group-flush small mb-3">
+                    {% if triggered_rules %}
+                        {% for r in triggered_rules %}
+                            <li class="list-group-item px-0 py-1 text-dark"><i class="bi bi-arrow-right-short text-danger"></i> {{ r }}</li>
+                        {% endfor %}
+                    {% else %}
+                        <li class="list-group-item px-0 text-muted">Baseline incident category rule applied.</li>
+                    {% endif %}
+                </ul>
+
+                <!-- Raw Incident Transcript -->
+                <div class="border-top pt-3">
+                    <h6 class="fw-bold text-dark mb-1">Student Raw Distress Message:</h6>
+                    <div class="p-3 bg-light rounded text-dark fst-italic border">
+                        "{{ incident.message }}"
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Location & Casualties -->
+        <div class="card border-0 shadow-sm mb-4">
+            <div class="card-header bg-white py-3 border-bottom">
+                <h6 class="fw-bold mb-0 text-dark"><i class="bi bi-geo-alt-fill text-danger me-2"></i> Location & Casualty Assessment</h6>
+            </div>
+            <div class="card-body">
+                <div class="row g-3">
+                    <div class="col-md-6">
+                        <label class="text-muted small">Reported Campus Location:</label>
+                        <div class="fw-bold text-dark fs-6">{{ incident.location_name }}</div>
+                        <div class="small text-secondary font-monospace mt-1">
+                            GPS Lat: {{ incident.latitude or 12.9716 }}, Lon: {{ incident.longitude or 77.5946 }}
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <label class="text-muted small">Human Exposure / Casualties:</label>
+                        <div class="h5 fw-bold text-danger">{{ incident.people_count }} Person(s) in Immediate Danger</div>
+                        <div class="small text-muted">Reporter: {{ incident.reporter_name }} ({{ incident.reporter_phone or 'No phone provided' }})</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Audit & Notification Logs for this incident -->
+        <div class="card border-0 shadow-sm">
+            <div class="card-header bg-white py-3 border-bottom">
+                <h6 class="fw-bold mb-0 text-dark"><i class="bi bi-bell text-warning me-2"></i> Automated Mock Dispatch Log</h6>
+            </div>
+            <div class="card-body p-0">
+                {% if notifications %}
+                    <div class="table-responsive">
+                        <table class="table table-sm table-hover mb-0 small">
+                            <thead class="table-light">
+                                <tr>
+                                    <th>Channel</th>
+                                    <th>Recipient</th>
+                                    <th>Content</th>
+                                    <th>Status</th>
+                                    <th>Timestamp</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for n in notifications %}
+                                    <tr>
+                                        <td><span class="badge bg-secondary">{{ n.channel }}</span></td>
+                                        <td>{{ n.recipient_name }}</td>
+                                        <td class="text-truncate" style="max-width: 250px;">{{ n.content }}</td>
+                                        <td><span class="badge bg-success">{{ n.status }}</span></td>
+                                        <td class="text-muted">{{ n.timestamp.strftime('%H:%M:%S') }}</td>
+                                    </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                {% else %}
+                    <p class="p-3 text-muted small mb-0">No notification dispatches logged for this alert.</p>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+
+    <!-- Right Column: Haversine Dispatch & Management -->
+    <div class="col-lg-5">
+        <!-- Haversine Nearest Responders Dispatch Box -->
+        <div class="card border-0 shadow-sm mb-4">
+            <div class="card-header bg-danger text-white py-3 d-flex justify-content-between align-items-center">
+                <h6 class="fw-bold mb-0"><i class="bi bi-compass me-1"></i> Haversine Nearest Responders</h6>
+                <span class="badge bg-white text-danger fw-bold">Live Proximity</span>
+            </div>
+            <div class="card-body p-0">
+                <div class="p-3 bg-light border-bottom small text-muted">
+                    Responders ranked by Great-Circle Haversine distance from incident GPS ({{ incident.latitude }}, {{ incident.longitude }}).
+                </div>
+                
+                <div class="list-group list-group-flush">
+                    {% for resp in nearest_responders %}
+                        <div class="list-group-item p-3">
+                            <div class="d-flex justify-content-between align-items-start mb-2">
+                                <div>
+                                    <h6 class="fw-bold mb-0">{{ resp.name }}</h6>
+                                    <span class="badge bg-dark me-1">{{ resp.specialization }}</span>
+                                    {% if resp.status == 'Available' %}
+                                        <span class="badge bg-success">Available</span>
+                                    {% elif resp.status == 'Busy' %}
+                                        <span class="badge bg-warning text-dark">Busy</span>
+                                    {% else %}
+                                        <span class="badge bg-secondary">{{ resp.status }}</span>
+                                    {% endif %}
+                                </div>
+                                <div class="text-end">
+                                    <div class="fw-bold text-danger">{{ resp.distance_meters }} meters</div>
+                                    <small class="text-muted">ETA: ~{{ resp.eta_minutes }} min</small>
+                                </div>
+                            </div>
+
+                            {% if resp.is_specialty_match %}
+                                <div class="small text-success mb-2">
+                                    <i class="bi bi-check2-circle"></i> Recommended match for {{ incident.incident_type }} emergency
+                                </div>
+                            {% endif %}
+
+                            <form method="POST" action="{{ url_for('admin.assign_responder', id=incident.id) }}">
+                                <input type="hidden" name="responder_id" value="{{ resp.id }}">
+                                <div class="input-group input-group-sm">
+                                    <input type="text" name="admin_note" class="form-control" placeholder="Optional dispatch instruction...">
+                                    <button type="submit" class="btn btn-outline-danger fw-semibold" {% if resp.status == 'Off Duty' %}disabled{% endif %}>
+                                        <i class="bi bi-send me-1"></i> Assign Unit
+                                    </button>
+                                </div>
+                            </form>
+                        </div>
+                    {% endfor %}
+                </div>
+            </div>
+        </div>
+
+        <!-- Status Update & Admin Notes Panel -->
+        <div class="card border-0 shadow-sm mb-4">
+            <div class="card-header bg-white py-3 border-bottom">
+                <h6 class="fw-bold mb-0 text-dark"><i class="bi bi-pencil-square text-primary me-2"></i> Update Emergency Status & Notes</h6>
+            </div>
+            <div class="card-body">
+                <form method="POST" action="{{ url_for('admin.update_status', id=incident.id) }}">
+                    <div class="mb-3">
+                        <label class="form-label small fw-bold">Emergency Workflow Status</label>
+                        <select name="status" class="form-select">
+                            <option value="Pending" {% if incident.status == 'Pending' %}selected{% endif %}>Pending</option>
+                            <option value="Assigned" {% if incident.status == 'Assigned' %}selected{% endif %}>Assigned</option>
+                            <option value="In-Progress" {% if incident.status == 'In-Progress' %}selected{% endif %}>In-Progress</option>
+                            <option value="Resolved" {% if incident.status == 'Resolved' %}selected{% endif %}>Resolved</option>
+                            <option value="Dismissed" {% if incident.status == 'Dismissed' %}selected{% endif %}>Dismissed (False Alarm)</option>
+                        </select>
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label small fw-bold">Administrator Triage Notes</label>
+                        <textarea name="admin_notes" class="form-control" rows="3" placeholder="Enter status notes, incident findings, or resolution report..."></textarea>
+                    </div>
+
+                    <button type="submit" class="btn btn-dark w-100 fw-semibold">
+                        <i class="bi bi-check-lg me-1"></i> Save Workflow Status
+                    </button>
+                </form>
+
+                {% if incident.admin_notes %}
+                    <div class="mt-3 p-3 bg-light rounded border small">
+                        <h6 class="fw-bold mb-1">Internal Log:</h6>
+                        <pre class="mb-0 text-muted" style="white-space: pre-wrap; font-family: inherit;">{{ incident.admin_notes }}</pre>
+                    </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

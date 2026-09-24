@@ -1,0 +1,123 @@
+{% extends "base.html" %}
+
+{% block title %}Emergency Incident Tracking #{{ incident.id }} - Campus Emergency AI{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-lg-9">
+        <div class="card border-0 shadow-sm mb-4">
+            <div class="card-header bg-dark text-white py-3 d-flex justify-content-between align-items-center">
+                <div>
+                    <h5 class="fw-bold mb-0">Emergency Case #{{ incident.id }} &middot; {{ incident.incident_type }}</h5>
+                    <small class="text-secondary">Reported at {{ incident.created_at.strftime('%Y-%m-%d %H:%M:%S UTC') }}</small>
+                </div>
+                <div>
+                    {% if incident.status == 'Resolved' %}
+                        <span class="badge bg-success fs-6"><i class="bi bi-check2-circle"></i> Resolved</span>
+                    {% elif incident.status == 'In-Progress' or incident.status == 'Assigned' %}
+                        <span class="badge bg-primary fs-6"><i class="bi bi-arrow-repeat"></i> {{ incident.status }}</span>
+                    {% else %}
+                        <span class="badge bg-danger fs-6"><i class="bi bi-clock"></i> Pending Dispatch</span>
+                    {% endif %}
+                </div>
+            </div>
+
+            <div class="card-body p-4">
+                <!-- AI Severity Summary Ribbon -->
+                <div class="p-3 mb-4 rounded border {% if incident.severity_level == 'High' %}bg-danger bg-opacity-10 border-danger{% elif incident.severity_level == 'Medium' %}bg-warning bg-opacity-10 border-warning{% else %}bg-success bg-opacity-10 border-success{% endif %}">
+                    <div class="d-flex flex-wrap justify-content-between align-items-center gap-2">
+                        <div>
+                            <span class="fw-bold text-uppercase small text-muted">AI Severity Evaluation</span>
+                            <div class="h4 fw-bold mb-0 {% if incident.severity_level == 'High' %}text-danger{% elif incident.severity_level == 'Medium' %}text-warning-emphasis{% else %}text-success{% endif %}">
+                                {{ incident.severity_score }} / 10 &middot; {{ incident.severity_level }} Priority
+                            </div>
+                        </div>
+                        <div class="text-end small">
+                            <div><strong>Rule Score:</strong> {{ incident.rule_score or incident.severity_score }} / 10</div>
+                            <div><strong>ML Classification:</strong> {{ incident.ml_level }} ({{ ((incident.ml_confidence or 0.85) * 100)|round(1) }}% conf)</div>
+                        </div>
+                    </div>
+                    {% if incident.summary %}
+                        <div class="mt-2 pt-2 border-top border-secondary-subtle small fw-semibold text-dark">
+                            <i class="bi bi-robot me-1 text-primary"></i> Dispatch Summary: "{{ incident.summary }}"
+                        </div>
+                    {% endif %}
+                </div>
+
+                <div class="row g-4">
+                    <!-- Incident Context Details -->
+                    <div class="col-md-7">
+                        <h6 class="fw-bold text-dark border-bottom pb-2 mb-3"><i class="bi bi-info-circle text-primary me-1"></i> Incident Information</h6>
+                        <dl class="row small mb-0">
+                            <dt class="col-sm-4 text-muted">Location:</dt>
+                            <dd class="col-sm-8 fw-semibold text-dark">{{ incident.location_name }}</dd>
+
+                            <dt class="col-sm-4 text-muted">Coordinates:</dt>
+                            <dd class="col-sm-8 text-dark">{{ incident.latitude }}, {{ incident.longitude }}</dd>
+
+                            <dt class="col-sm-4 text-muted">People at Risk:</dt>
+                            <dd class="col-sm-8 text-dark"><span class="badge bg-secondary">{{ incident.people_count }} person(s)</span></dd>
+
+                            <dt class="col-sm-4 text-muted">Reported Details:</dt>
+                            <dd class="col-sm-8 text-dark p-2 bg-light rounded">{{ incident.message }}</dd>
+                        </dl>
+                    </div>
+
+                    <!-- Assigned Tactical Unit -->
+                    <div class="col-md-5">
+                        <div class="card bg-light border-0 p-3 h-100">
+                            <h6 class="fw-bold text-dark mb-3"><i class="bi bi-shield-shaded text-danger me-1"></i> Assigned First Responder</h6>
+                            {% if incident.assigned_responder and incident.assigned_responder.user %}
+                                <div class="d-flex align-items-center mb-3">
+                                    <div class="bg-primary text-white rounded-circle p-3 me-3 fs-4">
+                                        <i class="bi bi-person-badge"></i>
+                                    </div>
+                                    <div>
+                                        <h6 class="fw-bold mb-0">{{ incident.assigned_responder.user.name }}</h6>
+                                        <div class="small text-muted">{{ incident.assigned_responder.specialization }} Unit</div>
+                                        <div class="small text-success fw-semibold"><i class="bi bi-dot"></i> {{ incident.assigned_responder.current_status }}</div>
+                                    </div>
+                                </div>
+                                <div class="small">
+                                    <div class="mb-1"><i class="bi bi-telephone text-primary me-1"></i> Phone: <strong>{{ incident.assigned_responder.user.phone or "Campus Internal" }}</strong></div>
+                                    <div><i class="bi bi-truck text-secondary me-1"></i> Unit Vehicle: <strong>{{ incident.assigned_responder.assigned_vehicle or "Campus Buggy" }}</strong></div>
+                                </div>
+                            {% else %}
+                                <div class="text-center py-4 text-muted">
+                                    <div class="spinner-grow spinner-grow-sm text-danger mb-2"></div>
+                                    <p class="small mb-1">Central Dispatch is routing the nearest available unit.</p>
+                                    <span class="badge bg-secondary">ETA Calculation in progress</span>
+                                </div>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Live Updates Timeline -->
+                <h6 class="fw-bold text-dark border-bottom pb-2 mt-4 mb-3"><i class="bi bi-clock-history text-secondary me-1"></i> Tactical Response Log</h6>
+                {% if incident.updates %}
+                    <ul class="list-group list-group-flush small">
+                        {% for upd in incident.updates %}
+                            <li class="list-group-item px-0 d-flex justify-content-between align-items-start">
+                                <div>
+                                    <span class="badge bg-dark me-2">{{ upd.status_change }}</span>
+                                    <span class="text-dark">{{ upd.notes }}</span>
+                                </div>
+                                <span class="text-muted text-nowrap ms-3">{{ upd.timestamp.strftime('%H:%M:%S') }}</span>
+                            </li>
+                        {% endfor %}
+                    </ul>
+                {% else %}
+                    <p class="small text-muted mb-0">No tactical field updates logged yet.</p>
+                {% endif %}
+
+                <div class="mt-4 pt-3 border-top text-end">
+                    <a href="{{ url_for('student.dashboard') }}" class="btn btn-outline-secondary btn-sm">
+                        <i class="bi bi-arrow-left me-1"></i> Back to Dashboard
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

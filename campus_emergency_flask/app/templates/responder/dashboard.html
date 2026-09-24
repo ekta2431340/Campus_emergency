@@ -1,0 +1,166 @@
+{% extends "base.html" %}
+
+{% block title %}Tactical Responder Console - Campus Emergency AI{% endblock %}
+
+{% block content %}
+<div class="row g-4">
+    <!-- Left Column: Duty Readiness & Status -->
+    <div class="col-lg-4">
+        <div class="card border-0 shadow-sm mb-4">
+            <div class="card-header bg-dark text-white py-3">
+                <h5 class="fw-bold mb-0"><i class="bi bi-shield-shaded text-warning me-2"></i> Tactical Unit Status</h5>
+            </div>
+            <div class="card-body">
+                <div class="d-flex align-items-center mb-4">
+                    <div class="bg-warning bg-opacity-25 text-dark rounded-circle p-3 me-3 fs-3">
+                        <i class="bi bi-person-badge-fill"></i>
+                    </div>
+                    <div>
+                        <h5 class="fw-bold mb-0 text-dark">{{ current_user.name }}</h5>
+                        <div class="badge bg-secondary">{{ profile.specialization if profile else 'Tactical Responder' }} Unit</div>
+                        <div class="small text-muted mt-1">Vehicle: {{ profile.assigned_vehicle if profile else 'Patrol 1' }}</div>
+                    </div>
+                </div>
+
+                <form method="POST" action="{{ url_for('responder.update_status') }}">
+                    <label class="form-label fw-bold small text-muted text-uppercase">Update My Duty Availability:</label>
+                    <div class="d-grid gap-2 mb-3">
+                        <div class="btn-group" role="group">
+                            <input type="radio" class="btn-check" name="current_status" id="st_avail" value="Available" {% if profile and profile.current_status == 'Available' %}checked{% endif %}>
+                            <label class="btn btn-outline-success btn-sm" for="st_avail">Available</label>
+
+                            <input type="radio" class="btn-check" name="current_status" id="st_onduty" value="On Duty" {% if profile and profile.current_status == 'On Duty' %}checked{% endif %}>
+                            <label class="btn btn-outline-primary btn-sm" for="st_onduty">On Duty</label>
+
+                            <input type="radio" class="btn-check" name="current_status" id="st_busy" value="Busy" {% if profile and profile.current_status == 'Busy' %}checked{% endif %}>
+                            <label class="btn btn-outline-warning btn-sm" for="st_busy">Busy</label>
+
+                            <input type="radio" class="btn-check" name="current_status" id="st_off" value="Off Duty" {% if profile and profile.current_status == 'Off Duty' %}checked{% endif %}>
+                            <label class="btn btn-outline-secondary btn-sm" for="st_off">Off Duty</label>
+                        </div>
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label small fw-bold text-muted">Current GPS Position</label>
+                        <div class="input-group input-group-sm">
+                            <input type="text" name="latitude" class="form-control" value="{{ profile.latitude if profile else 12.9716 }}" placeholder="Lat">
+                            <input type="text" name="longitude" class="form-control" value="{{ profile.longitude if profile else 77.5946 }}" placeholder="Lon">
+                        </div>
+                    </div>
+
+                    <button type="submit" class="btn btn-dark btn-sm w-100 fw-semibold">
+                        <i class="bi bi-arrow-repeat me-1"></i> Transmit Status & GPS Update
+                    </button>
+                </form>
+            </div>
+        </div>
+
+        <!-- High Priority Campus Broadcasts -->
+        <div class="card border-0 shadow-sm">
+            <div class="card-header bg-white py-3 border-bottom">
+                <h6 class="fw-bold mb-0 text-danger"><i class="bi bi-megaphone-fill me-2"></i> Active Critical Broadcasts</h6>
+            </div>
+            <div class="card-body p-0">
+                <div class="list-group list-group-flush">
+                    {% for b in broadcast_alerts %}
+                        <div class="list-group-item p-3">
+                            <div class="d-flex justify-content-between align-items-center mb-1">
+                                <span class="badge bg-danger">Sev {{ b.severity_score }}/10</span>
+                                <small class="text-muted">{{ b.created_at.strftime('%H:%M') }}</small>
+                            </div>
+                            <div class="fw-bold text-dark small mb-1">{{ b.incident_type }} &middot; {{ b.location_name }}</div>
+                            <p class="small text-muted mb-0 font-monospace">{{ b.summary or b.message }}</p>
+                        </div>
+                    {% else %}
+                        <p class="p-3 text-muted small mb-0">No unassigned high-severity emergencies currently active.</p>
+                    {% endfor %}
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Right Column: Assigned Emergencies Queue -->
+    <div class="col-lg-8">
+        <div class="card border-0 shadow-sm">
+            <div class="card-header bg-white py-3 border-bottom d-flex justify-content-between align-items-center">
+                <h5 class="fw-bold mb-0 text-dark"><i class="bi bi-inbox-fill text-primary me-2"></i> My Assigned Emergency Cases</h5>
+                <span class="badge bg-primary">{{ assigned_cases|length }} Assigned</span>
+            </div>
+
+            <div class="card-body p-4">
+                {% if assigned_cases %}
+                    {% for c in assigned_cases %}
+                        <div class="card border mb-4 {% if c.status == 'Resolved' %}border-secondary bg-light{% else %}border-primary{% endif %} shadow-sm">
+                            <div class="card-header bg-white py-3 d-flex justify-content-between align-items-center">
+                                <div>
+                                    <span class="badge bg-danger me-2">SEV {{ c.severity_score }}/10</span>
+                                    <span class="fw-bold text-dark fs-6">Incident #{{ c.id }} - {{ c.incident_type }}</span>
+                                </div>
+                                <div>
+                                    {% if c.status == 'Resolved' %}
+                                        <span class="badge bg-success">Resolved</span>
+                                    {% elif c.status == 'In-Progress' %}
+                                        <span class="badge bg-warning text-dark">On Scene / In-Progress</span>
+                                    {% else %}
+                                        <span class="badge bg-primary">Assigned</span>
+                                    {% endif %}
+                                </div>
+                            </div>
+
+                            <div class="card-body">
+                                <div class="row g-3 mb-3">
+                                    <div class="col-md-6">
+                                        <div class="small text-muted">Incident Location:</div>
+                                        <div class="fw-bold text-dark fs-6"><i class="bi bi-geo-alt-fill text-danger"></i> {{ c.location_name }}</div>
+                                        <div class="small text-secondary">GPS: {{ c.latitude }}, {{ c.longitude }}</div>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <div class="small text-muted">Reported Casualties:</div>
+                                        <div class="fw-bold text-danger">{{ c.people_count }} person(s) affected</div>
+                                        <div class="small text-muted">Reporter: {{ c.reporter_name }} ({{ c.reporter_phone or 'No phone' }})</div>
+                                    </div>
+                                </div>
+
+                                <div class="p-3 bg-light rounded border mb-3 small font-monospace">
+                                    <strong class="text-dark">Dispatch Brief:</strong> {{ c.summary or c.message }}
+                                </div>
+
+                                {% if c.status != 'Resolved' %}
+                                    <form method="POST" action="{{ url_for('responder.update_case', id=c.id) }}">
+                                        <div class="row g-2 align-items-center">
+                                            <div class="col-md-6">
+                                                <input type="text" name="field_notes" class="form-control form-control-sm" placeholder="Field report (e.g. 'Arrived on scene, patient stabilized')...">
+                                            </div>
+                                            <div class="col-md-3">
+                                                <select name="action_status" class="form-select form-select-sm">
+                                                    <option value="In-Progress" selected>Action: On Scene</option>
+                                                    <option value="Resolved">Action: Mark Resolved</option>
+                                                </select>
+                                            </div>
+                                            <div class="col-md-3">
+                                                <button type="submit" class="btn btn-primary btn-sm w-100 fw-bold">
+                                                    <i class="bi bi-send-check"></i> Submit
+                                                </button>
+                                            </div>
+                                        </div>
+                                    </form>
+                                {% else %}
+                                    <div class="text-success small fw-bold">
+                                        <i class="bi bi-check-circle-fill"></i> Case resolved and archived.
+                                    </div>
+                                {% endif %}
+                            </div>
+                        </div>
+                    {% endfor %}
+                {% else %}
+                    <div class="p-5 text-center text-muted">
+                        <i class="bi bi-clipboard2-check fs-1 text-secondary mb-2"></i>
+                        <h6>No emergency cases currently assigned to your unit.</h6>
+                        <p class="small">Maintain standby readiness. Critical dispatch notifications will alert you instantly.</p>
+                    </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

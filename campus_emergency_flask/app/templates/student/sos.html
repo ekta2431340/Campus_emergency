@@ -1,0 +1,266 @@
+{% extends "base.html" %}
+
+{% block title %}Broadcast Emergency SOS - Campus Emergency AI{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-lg-8">
+        <div class="card shadow-sm border-0">
+            <div class="card-header bg-danger text-white py-3">
+                <div class="d-flex align-items-center justify-content-between">
+                    <div>
+                        <h4 class="fw-bold mb-0"><i class="bi bi-broadcast me-2"></i> Campus Emergency SOS Incident Form</h4>
+                        <small class="opacity-90">Transmits directly to Central Security and nearest tactical units</small>
+                    </div>
+                    <span class="badge bg-white text-danger px-3 py-2 fw-bold">HIGH PRIORITY</span>
+                </div>
+            </div>
+
+            <div class="card-body p-4 p-md-5">
+                <form method="POST" action="{{ url_for('student.sos_submit') }}" id="sosForm">
+                    <!-- Step 1: Incident Category -->
+                    <div class="mb-4">
+                        <label class="form-label fw-bold text-dark">
+                            <i class="bi bi-tag-fill text-danger me-1"></i> 1. Select Emergency Category
+                        </label>
+                        <div class="row g-2">
+                            <div class="col-6 col-md-4">
+                                <input type="radio" class="btn-check" name="incident_type" id="type_med" value="Medical" checked>
+                                <label class="btn btn-outline-danger w-100 py-2 d-flex flex-column align-items-center" for="type_med">
+                                    <i class="bi bi-heart-pulse-fill fs-4 mb-1"></i>
+                                    <span>Medical</span>
+                                </label>
+                            </div>
+                            <div class="col-6 col-md-4">
+                                <input type="radio" class="btn-check" name="incident_type" id="type_fire" value="Fire">
+                                <label class="btn btn-outline-danger w-100 py-2 d-flex flex-column align-items-center" for="type_fire">
+                                    <i class="bi bi-fire fs-4 mb-1"></i>
+                                    <span>Fire / Smoke</span>
+                                </label>
+                            </div>
+                            <div class="col-6 col-md-4">
+                                <input type="radio" class="btn-check" name="incident_type" id="type_violence" value="Violence">
+                                <label class="btn btn-outline-danger w-100 py-2 d-flex flex-column align-items-center" for="type_violence">
+                                    <i class="bi bi-exclamation-octagon-fill fs-4 mb-1"></i>
+                                    <span>Violence / Threat</span>
+                                </label>
+                            </div>
+                            <div class="col-6 col-md-4">
+                                <input type="radio" class="btn-check" name="incident_type" id="type_hazard" value="Hazard">
+                                <label class="btn btn-outline-danger w-100 py-2 d-flex flex-column align-items-center" for="type_hazard">
+                                    <i class="bi bi-radioactive fs-4 mb-1"></i>
+                                    <span>Hazard / Gas</span>
+                                </label>
+                            </div>
+                            <div class="col-6 col-md-4">
+                                <input type="radio" class="btn-check" name="incident_type" id="type_struct" value="Structural">
+                                <label class="btn btn-outline-danger w-100 py-2 d-flex flex-column align-items-center" for="type_struct">
+                                    <i class="bi bi-building-fill-exclamation fs-4 mb-1"></i>
+                                    <span>Lift / Structural</span>
+                                </label>
+                            </div>
+                            <div class="col-6 col-md-4">
+                                <input type="radio" class="btn-check" name="incident_type" id="type_general" value="General">
+                                <label class="btn btn-outline-danger w-100 py-2 d-flex flex-column align-items-center" for="type_general">
+                                    <i class="bi bi-question-circle-fill fs-4 mb-1"></i>
+                                    <span>General Urgent</span>
+                                </label>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Step 2: Location with Geolocation & Fallback -->
+                    <div class="mb-4">
+                        <label class="form-label fw-bold text-dark d-flex justify-content-between align-items-center">
+                            <span><i class="bi bi-geo-alt-fill text-danger me-1"></i> 2. Emergency Location</span>
+                            <button type="button" class="btn btn-outline-primary btn-sm" id="btnGetLocation">
+                                <i class="bi bi-crosshair"></i> Use My Exact Device GPS
+                            </button>
+                        </label>
+
+                        <!-- Manual Landmark Selection -->
+                        <div class="input-group mb-2">
+                            <span class="input-group-text"><i class="bi bi-buildings"></i></span>
+                            <select class="form-select" id="locationPreset" onchange="applyPresetLocation(this)">
+                                <option value="" selected>-- Select Known Campus Landmark or Zone --</option>
+                                {% for loc in locations %}
+                                    <option value="{{ loc.name }}" data-lat="{{ loc.lat }}" data-lon="{{ loc.lon }}">
+                                        {{ loc.name }}
+                                    </option>
+                                {% endfor %}
+                            </select>
+                        </div>
+
+                        <div class="mb-2">
+                            <input type="text" class="form-control" name="location_name" id="locationNameInput" 
+                                   placeholder="Specific room or wing (e.g. Science Block Room 204 or Library 2nd Floor)" required>
+                        </div>
+
+                        <!-- Hidden / Optional Lat-Lon Coordinates -->
+                        <div class="row g-2 small text-muted">
+                            <div class="col-6">
+                                <label class="form-label mb-1">Latitude</label>
+                                <input type="number" step="any" class="form-control form-control-sm bg-light" name="latitude" id="latInput" value="12.9716">
+                            </div>
+                            <div class="col-6">
+                                <label class="form-label mb-1">Longitude</label>
+                                <input type="number" step="any" class="form-control form-control-sm bg-light" name="longitude" id="lonInput" value="77.5946">
+                            </div>
+                        </div>
+                        <div id="gpsStatusText" class="form-text text-success d-none">
+                            <i class="bi bi-check-circle-fill"></i> High-accuracy device GPS acquired successfully.
+                        </div>
+                    </div>
+
+                    <!-- Step 3: People Count -->
+                    <div class="mb-4">
+                        <label class="form-label fw-bold text-dark">
+                            <i class="bi bi-people-fill text-danger me-1"></i> 3. Estimated People in Immediate Danger or Affected
+                        </label>
+                        <div class="input-group" style="max-width: 220px;">
+                            <button type="button" class="btn btn-outline-secondary" onclick="decrementCount()">-</button>
+                            <input type="number" class="form-control text-center fw-bold" name="people_count" id="peopleCount" value="1" min="1" max="500">
+                            <button type="button" class="btn btn-outline-secondary" onclick="incrementCount()">+</button>
+                        </div>
+                        <div class="form-text">For mass emergencies (e.g. lab fire, elevator entrapment), specify total trapped/affected.</div>
+                    </div>
+
+                    <!-- Step 4: Incident Message -->
+                    <div class="mb-4">
+                        <label class="form-label fw-bold text-dark">
+                            <i class="bi bi-chat-left-text-fill text-danger me-1"></i> 4. Describe What Is Happening (Urgent Details)
+                        </label>
+                        <textarea class="form-control" name="message" id="messageInput" rows="4" 
+                                  placeholder="Describe the situation clearly. e.g. 'Student fell unconscious in chemistry lab, strong chemical smell, not breathing properly, please bring oxygen and medic immediately.'" 
+                                  required oninput="runLivePreview()"></textarea>
+                    </div>
+
+                    <!-- Step 5: Live AI Severity Preview Box -->
+                    <div class="card border border-warning bg-warning bg-opacity-10 mb-4 p-3 rounded">
+                        <div class="d-flex align-items-center justify-content-between mb-2">
+                            <span class="fw-bold text-dark small">
+                                <i class="bi bi-cpu text-danger me-1"></i> Live Context-Aware Severity Forecast:
+                            </span>
+                            <span class="badge bg-warning text-dark fw-bold" id="previewBadge">Calculating...</span>
+                        </div>
+                        <div class="small text-muted" id="previewExplanation">
+                            Type an incident message above to see real-time AI keyword rule parsing and severity estimation.
+                        </div>
+                    </div>
+
+                    <!-- Action Submit -->
+                    <button type="submit" class="btn btn-danger btn-lg w-100 py-3 fw-bold text-uppercase shadow">
+                        <i class="bi bi-broadcast-pin me-2 fs-5"></i> Transmit Campus Emergency SOS Now
+                    </button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+function applyPresetLocation(selectElem) {
+    const selectedOption = selectElem.options[selectElem.selectedIndex];
+    if (selectedOption && selectedOption.value) {
+        document.getElementById('locationNameInput').value = selectedOption.value;
+        const lat = selectedOption.getAttribute('data-lat');
+        const lon = selectedOption.getAttribute('data-lon');
+        if (lat && lon) {
+            document.getElementById('latInput').value = lat;
+            document.getElementById('lonInput').value = lon;
+        }
+    }
+}
+
+function incrementCount() {
+    const input = document.getElementById('peopleCount');
+    input.value = parseInt(input.value || 1) + 1;
+}
+
+function decrementCount() {
+    const input = document.getElementById('peopleCount');
+    if (parseInt(input.value) > 1) {
+        input.value = parseInt(input.value) - 1;
+    }
+}
+
+// Browser Geolocation API
+document.getElementById('btnGetLocation').addEventListener('click', function() {
+    const statusText = document.getElementById('gpsStatusText');
+    if ("geolocation" in navigator) {
+        statusText.classList.remove('d-none');
+        statusText.classList.remove('text-danger');
+        statusText.classList.add('text-primary');
+        statusText.innerHTML = '<span class="spinner-border spinner-border-sm me-1"></span> Acquiring GPS coordinates...';
+        
+        navigator.geolocation.getCurrentPosition(
+            function(position) {
+                document.getElementById('latInput').value = position.coords.latitude.toFixed(6);
+                document.getElementById('lonInput').value = position.coords.longitude.toFixed(6);
+                statusText.classList.remove('text-primary');
+                statusText.classList.add('text-success');
+                statusText.innerHTML = '<i class="bi bi-check-circle-fill"></i> High-accuracy GPS coordinates recorded (' + position.coords.latitude.toFixed(4) + ', ' + position.coords.longitude.toFixed(4) + ')';
+            },
+            function(error) {
+                statusText.classList.remove('text-primary');
+                statusText.classList.add('text-warning');
+                statusText.innerHTML = '<i class="bi bi-exclamation-triangle-fill"></i> GPS permission declined or unavailable. Using default campus landmark position.';
+            },
+            { enableHighAccuracy: true, timeout: 5000, maximumAge: 0 }
+        );
+    } else {
+        alert("Geolocation is not supported by your browser. Please select a campus landmark.");
+    }
+});
+
+// Real-time Severity Rule Preview on typing
+let debounceTimer;
+function runLivePreview() {
+    clearTimeout(debounceTimer);
+    debounceTimer = setTimeout(() => {
+        const text = document.getElementById('messageInput').value.toLowerCase();
+        const typeElem = document.querySelector('input[name="incident_type"]:checked');
+        const incType = typeElem ? typeElem.value : 'General';
+        const badge = document.getElementById('previewBadge');
+        const explanation = document.getElementById('previewExplanation');
+        
+        if (!text) {
+            badge.className = 'badge bg-secondary';
+            badge.innerText = 'Standby';
+            explanation.innerText = 'Type an incident message above to see real-time AI keyword rule parsing.';
+            return;
+        }
+
+        // Fast client-side rule estimation matching server logic
+        let score = (incType === 'Fire' ? 5.5 : (incType === 'Medical' ? 4.5 : (incType === 'Violence' ? 5.0 : 3.5)));
+        const criticalWords = ['unconscious', 'not breathing', 'cardiac', 'knife', 'weapon', 'bleeding', 'explosion', 'toxic', 'trapped', 'fire'];
+        let matched = [];
+
+        criticalWords.forEach(w => {
+            if (text.includes(w)) {
+                score += 3.0;
+                matched.push(w);
+            }
+        });
+
+        score = Math.min(10.0, Math.max(1.0, score));
+
+        if (score >= 7.0 || matched.length > 0) {
+            badge.className = 'badge bg-danger';
+            badge.innerText = score.toFixed(1) + ' / 10 · High Severity';
+            explanation.innerHTML = '<strong>Critical life-threat detected:</strong> Matched keywords [' + matched.join(', ') + ']. Priority dispatch triggered.';
+        } else if (score >= 4.0) {
+            badge.className = 'badge bg-warning text-dark';
+            badge.innerText = score.toFixed(1) + ' / 10 · Medium Severity';
+            explanation.innerText = 'Moderate priority emergency. Tactical squad will be notified.';
+        } else {
+            badge.className = 'badge bg-success';
+            badge.innerText = score.toFixed(1) + ' / 10 · Low Severity';
+            explanation.innerText = 'Routine campus assistance request.';
+        }
+    }, 250);
+}
+</script>
+{% endblock %}
